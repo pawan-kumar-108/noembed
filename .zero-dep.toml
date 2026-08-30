@@ -1,0 +1,2 @@
+track = "D"
+pitch = "A hand-rolled TF-IDF + cosine-similarity semantic search engine with a crash-safe, atomically-persisted inverted index — zero numpy, zero scikit-learn, zero faiss."
