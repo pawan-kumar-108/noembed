@@ -1,0 +1,40 @@
+1. Introduction
+This is a synthetic text file created for testing an indexing feature.
+It contains headings, repeated keywords, numbers, names, dates, and varied sentences.
+
+2. Random Data
+Alpha is associated with 17.
+Beta is associated with 42.
+Gamma is associated with 108.
+Delta is associated with 256.
+Epsilon is associated with 999.
+
+3. People and Places
+Aarav visited Delhi on 12 March 2026.
+Maya traveled from Mumbai to Jaipur.
+Rohan works remotely from Bengaluru.
+Sara planned a trip to Kolkata.
+Kabir attended a conference in Hyderabad.
+
+4. Repeated Search Terms
+INDEX_TEST appears several times in this document.
+The keyword INDEX_TEST is useful for exact-match testing.
+Another occurrence: INDEX_TEST.
+Search systems should be able to retrieve this paragraph when looking for indexing.
+
+5. Technical Notes
+An index may store document identifiers, tokens, metadata, embeddings, or other searchable representations.
+A retrieval system can use keyword matching, semantic similarity, vector search, or hybrid search.
+Chunking divides long documents into smaller pieces so that relevant passages can be retrieved efficiently.
+
+6. Mixed Content
+The quick brown fox jumps over the lazy dog.
+Pack my box with five dozen liquor jugs.
+Testing 12345 should work.
+Special symbols: @ # $ % & * + = ?
+Email-like text: example@test.local
+URL-like text: https://example.local/test
+Version: v2.7.14
+
+7. Final Section
+If your indexing system is working correctly, searches for "INDEX_TEST", "Gamma", "Bengaluru", "chunking", and "12345" should return this document.
