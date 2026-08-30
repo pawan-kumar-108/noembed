@@ -1,11 +1,13 @@
 """
 Tokenizer — no nltk, no spacy. Lowercase, strip punctuation, split on
-whitespace, filter a small hardcoded stopword list.
+whitespace, filter a small hardcoded stopword list, and optionally stem.
 
-See STDLIB.md: this replaces nltk's tokenizer + stopword corpus.
+See STDLIB.md: this replaces nltk's tokenizer + stopword corpus + stemmer.
 """
 
 import string
+
+from src.stemmer import stem
 
 # Small, hand-picked stopword list. Not exhaustive by design — the goal is
 # to strip the highest-frequency noise words that would otherwise dominate
@@ -25,7 +27,9 @@ STOPWORDS = frozenset({
 _PUNCT_TABLE = str.maketrans({ch: " " for ch in string.punctuation})
 
 
-def tokenize(text: str, remove_stopwords: bool = True) -> list[str]:
+def tokenize(
+    text: str, remove_stopwords: bool = True, use_stemming: bool = True
+) -> list[str]:
     """
     Turn raw text into a list of lowercase tokens.
 
@@ -34,6 +38,11 @@ def tokenize(text: str, remove_stopwords: bool = True) -> list[str]:
       "hello,world" splits into two tokens rather than merging).
     - Splits on any whitespace run.
     - Drops empty tokens and, by default, stopwords.
+    - By default, stems each token (see src/stemmer.py) so that e.g.
+      "cook", "cooking", and "cooked" collapse to the same indexed term.
+      This trades a small amount of precision (stems can occasionally
+      merge unrelated words) for much better recall on inflected forms —
+      pass use_stemming=False to disable it and keep exact word forms.
 
     Non-ASCII text is preserved as-is aside from lowercasing and ASCII
     punctuation stripping — this is a known, documented limitation (see
@@ -47,5 +56,11 @@ def tokenize(text: str, remove_stopwords: bool = True) -> list[str]:
     raw_tokens = stripped.split()
 
     if remove_stopwords:
-        return [t for t in raw_tokens if t and t not in STOPWORDS]
-    return [t for t in raw_tokens if t]
+        raw_tokens = [t for t in raw_tokens if t and t not in STOPWORDS]
+    else:
+        raw_tokens = [t for t in raw_tokens if t]
+
+    if use_stemming:
+        raw_tokens = [stem(t) for t in raw_tokens]
+
+    return raw_tokens

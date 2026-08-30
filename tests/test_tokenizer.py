@@ -38,6 +38,23 @@ class TokenizerTests(unittest.TestCase):
     def test_punctuation_only_input(self):
         self.assertEqual(tokenize("!!! ... ,,,"), [])
 
+    def test_stems_by_default(self):
+        self.assertEqual(
+            tokenize("cooking cooked cooks", remove_stopwords=False),
+            ["cook", "cook", "cook"],
+        )
+
+    def test_stemming_can_be_disabled(self):
+        self.assertEqual(
+            tokenize("cooking cooked", remove_stopwords=False, use_stemming=False),
+            ["cooking", "cooked"],
+        )
+
+    def test_search_word_matches_document_word_via_stemming(self):
+        # The concrete bug this feature fixes: a query for "cook" should
+        # now share a token with a document containing "cooked".
+        self.assertEqual(tokenize("cook")[0], tokenize("cooked")[0])
+
 
 if __name__ == "__main__":
     unittest.main()
