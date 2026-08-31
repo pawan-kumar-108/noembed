@@ -14,6 +14,9 @@ surfaces a document about dogs even without those exact words overlapping
 much. Verified end-to-end against a real four-document corpus during
 development; see the demo video for the live run.
 
+## Demo
+[![Watch the demo](https://img.shields.io/badge/▶-Watch%20Demo-red?style=for-the-badge)](https://youtu.be/TXFwBJZLFv0)
+
 ## How to run it
 
 ```
