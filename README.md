@@ -1,9 +1,21 @@
 # noembed
 
+[![tests](https://img.shields.io/badge/tests-75%20passing-brightgreen)](#tests)
+[![dependencies](https://img.shields.io/badge/dependencies-0-blue)](#zero-dependency-proof)
+[![stdlib only](https://img.shields.io/badge/python-stdlib%20only-yellow)](#how-it-works)
+
 A zero-dependency semantic search engine. Hand-rolled TF-IDF vectorization,
 cosine similarity, and an inverted index, persisted to disk with crash-safe
 atomic writes. No numpy, no scikit-learn, no faiss — Python standard library
 only.
+
+## Demo
+
+[![noembed demo](https://img.youtube.com/vi/TXFwBJZLFv0/maxresdefault.jpg)](https://youtu.be/TXFwBJZLFv0)
+
+**5 minutes, unedited.** Live search over a real corpus, the crash-recovery
+test running to completion, and a stemmer bug caught mid-build — shown, not
+just claimed.
 
 ## What it does
 
@@ -14,22 +26,22 @@ surfaces a document about dogs even without those exact words overlapping
 much. Verified end-to-end against a real four-document corpus during
 development; see the demo video for the live run.
 
-## Demo
-[![Watch the demo](https://img.shields.io/badge/▶-Watch%20Demo-red?style=for-the-badge)](https://youtu.be/TXFwBJZLFv0)
-
 ## How to run it
 
 ```
 make run          # shows CLI help
 
-python3 -m src.cli index <folder> [--out PATH]         # build an index
-python3 -m src.cli search "<query>" [-k N] [--explain]  # search it
-python3 -m src.cli stats [--out PATH]                    # index stats
+python3 -m src.cli index <folder> [--out PATH]           # build an index
+python3 -m src.cli search "<query>" [-k N] [--explain]   # search it
+python3 -m src.cli stats [--out PATH]                     # index stats
+python3 -m src.cli inspect [--out PATH] [--doc NAME] [--top N]  # inspect the index
 ```
 
 `--out` defaults to `.noembed_index.json` in the current directory if
 omitted. `--explain` on search shows which shared terms drove each result's
-score, sorted by contribution.
+score, sorted by contribution. `inspect` shows the most distinctive terms
+across the corpus, or within a single document, by rarity — a legible way
+to see what the index actually learned.
 
 Only files with these extensions are indexed: `.txt .md .markdown .rst .log
 .csv .json`. Everything else in the folder is skipped silently (not an
@@ -43,7 +55,8 @@ standard smoothed formula (`tf * (ln((1+N)/(1+df)) + 1)`) over plain Python
 dicts — no arrays. An inverted index (term → document IDs) means a search
 only scores documents that actually share a term with the query, not the
 whole corpus. Ranking is cosine similarity over the sparse TF-IDF vectors.
-See `STDLIB.md` for every package this replaced and why.
+A hand-written suffix-stripping stemmer normalizes word forms (e.g. "cook"
+matches "cooked"). See `STDLIB.md` for every package this replaced and why.
 
 ## Durability guarantee
 
@@ -73,7 +86,10 @@ filesystem — that's out of scope here.
   vector (its IDF is undefined) — it's silently dropped rather than
   penalizing the query.
 - Non-ASCII text is lowercased and whitespace-split but not otherwise
-  linguistically processed (no stemming, no locale-aware casing).
+  linguistically processed (no locale-aware casing).
+- The stemmer is a hand-written suffix-rule approach and can over-stem
+  proper nouns (e.g. "James" → "jam") — a documented trade-off against
+  better recall on regular word forms, not a hidden bug.
 - The stopword list is small and hand-picked, not an exhaustive corpus.
 
 ## Zero-dependency proof
@@ -86,9 +102,11 @@ See `deps-proof.txt` and `STDLIB.md`. `requirements.txt` is empty.
 python3 -m unittest discover -s tests -v
 ```
 
-42 tests, covering the tokenizer, TF-IDF math (hand-verified against known
-formulas), cosine similarity properties, end-to-end build/search/persist
-round-trips, and the crash-recovery guarantee above.
+75 tests, covering the tokenizer, TF-IDF math (hand-verified against known
+formulas), cosine similarity properties, the stemmer (including regression
+tests for caught bugs), end-to-end build/search/persist round-trips, the
+colored display module, the `inspect` command, and the crash-recovery
+guarantee above.
 
 ## License
 
