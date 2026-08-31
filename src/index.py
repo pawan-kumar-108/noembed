@@ -119,6 +119,28 @@ class NoEmbedIndex:
             "vocabulary_size": len(self.inverted),
         }
 
+    def top_terms(self, n: int = 10) -> list[tuple[str, float]]:
+        """
+        The n rarest terms in the corpus by IDF — the vocabulary the index
+        considers most distinctive (as opposed to common words that appear
+        everywhere and score low). Useful for sanity-checking what an
+        index actually "knows" without reading raw JSON.
+        """
+        idf = self.vectorizer.idf
+        return sorted(idf.items(), key=lambda pair: pair[1], reverse=True)[:n]
+
+    def top_terms_for_doc(self, doc_id: str, n: int = 8) -> list[tuple[str, float]]:
+        """
+        The n highest-weighted terms within a single document's TF-IDF
+        vector — effectively "what is this document about," according to
+        the index.
+        """
+        vector = self.doc_vectors.get(doc_id, {})
+        return sorted(vector.items(), key=lambda pair: pair[1], reverse=True)[:n]
+
+    def document_ids(self) -> list[str]:
+        return sorted(self.doc_vectors.keys())
+
     # ---- persistence ------------------------------------------------------
 
     def save(self, path: str | Path) -> None:

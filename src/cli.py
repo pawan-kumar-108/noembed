@@ -18,6 +18,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from src.display import bold, contribution_bar, dim, score_bar, score_label
 from src.index import NoEmbedIndex
 
 DEFAULT_INDEX_PATH = ".noembed_index.json"
@@ -87,13 +88,19 @@ def cmd_search(args: argparse.Namespace) -> int:
         print("no matches")
         return 0
 
+    print(dim(f"query: \"{args.query}\"  ({len(results)} result(s))"))
+    print()
+
     for rank, (doc_id, score, query_vector) in enumerate(results, start=1):
-        print(f"{rank}. {doc_id}  (score: {score:.4f})")
+        print(f"{bold(f'{rank}. {doc_id}')}   {score_bar(score)}   {score_label(score)}")
         if args.explain:
             shared = index.explain(doc_id, query_vector)[:5]
             if shared:
-                terms = ", ".join(f"{term}={contribution:.4f}" for term, contribution in shared)
-                print(f"     matched on: {terms}")
+                max_contribution = shared[0][1]
+                for term, contribution in shared:
+                    bar = contribution_bar(contribution, max_contribution)
+                    print(f"     {term:<15} {bar}  {dim(f'{contribution:.4f}')}")
+        print()
     return 0
 
 
@@ -111,9 +118,70 @@ def cmd_stats(args: argparse.Namespace) -> int:
 
     stats = index.stats()
     index_size = Path(args.out).stat().st_size
-    print(f"documents:       {stats['documents']}")
-    print(f"vocabulary size: {stats['vocabulary_size']}")
-    print(f"index file size: {index_size} bytes")
+    print(bold("noembed index"))
+    print(f"  {'documents':<16} {stats['documents']}")
+    print(f"  {'vocabulary size':<16} {stats['vocabulary_size']}")
+    print(f"  {'index file size':<16} {index_size:,} bytes")
+    return 0
+
+
+def cmd_inspect(args: argparse.Namespace) -> int:
+    """
+    A human-readable view of what's actually inside an index file — the
+    intended alternative to opening the raw JSON in an editor, which shows
+    implementation detail (idf tables, inverted-index internals) rather
+    than anything meaningful to look at directly.
+    """
+    if not NoEmbedIndex.exists(args.out):
+        print(f"error: no index found at '{args.out}' — run 'noembed index' first", file=sys.stderr)
+        return 1
+
+    index = NoEmbedIndex()
+    try:
+        index.load(args.out)
+    except (OSError, ValueError, KeyError) as e:
+        print(f"error: could not load index at '{args.out}': {e}", file=sys.stderr)
+        return 1
+
+    if args.doc:
+        if args.doc not in index.doc_vectors:
+            print(f"error: '{args.doc}' is not in this index", file=sys.stderr)
+            print("available documents:", file=sys.stderr)
+            for doc_id in index.document_ids():
+                print(f"  {doc_id}", file=sys.stderr)
+            return 1
+
+        top = index.top_terms_for_doc(args.doc, n=args.top)
+        print(bold(f"{args.doc}"))
+        if not top:
+            print(dim("  (no terms — empty document)"))
+            return 0
+        max_weight = top[0][1]
+        for term, weight in top:
+            bar = contribution_bar(weight, max_weight)
+            print(f"  {term:<15} {bar}  {dim(f'{weight:.4f}')}")
+        return 0
+
+    stats = index.stats()
+    print(bold("noembed index overview"))
+    print(f"  {stats['documents']} document(s), {stats['vocabulary_size']} unique term(s)")
+    print()
+
+    print(bold(f"most distinctive terms (top {args.top} by rarity across the corpus)"))
+    top = index.top_terms(n=args.top)
+    if top:
+        max_idf = top[0][1]
+        for term, idf in top:
+            bar = contribution_bar(idf, max_idf)
+            print(f"  {term:<15} {bar}  {dim(f'idf={idf:.4f}')}")
+    print()
+
+    print(bold("documents"))
+    for doc_id in index.document_ids():
+        term_count = len(index.doc_vectors[doc_id])
+        print(f"  {doc_id:<30} {dim(f'{term_count} unique term(s)')}")
+    print()
+    print(dim(f"tip: noembed inspect --out {args.out} --doc <name> to see one document's top terms"))
     return 0
 
 
@@ -141,6 +209,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_stats = subparsers.add_parser("stats", help="Show index statistics")
     p_stats.add_argument("--out", default=DEFAULT_INDEX_PATH, help="Index file path")
     p_stats.set_defaults(func=cmd_stats)
+
+    p_inspect = subparsers.add_parser(
+        "inspect", help="Human-readable view of an index's contents (alternative to opening the raw JSON)"
+    )
+    p_inspect.add_argument("--out", default=DEFAULT_INDEX_PATH, help="Index file path")
+    p_inspect.add_argument("--doc", default=None, help="Show top terms for one specific document")
+    p_inspect.add_argument("--top", type=int, default=10, help="Number of terms to show")
+    p_inspect.set_defaults(func=cmd_inspect)
 
     return parser
 

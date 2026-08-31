@@ -62,6 +62,30 @@ class BuildAndSearchTests(unittest.TestCase):
         self.assertEqual(stats["documents"], 3)
         self.assertGreater(stats["vocabulary_size"], 0)
 
+    def test_top_terms_returns_highest_idf_first(self):
+        top = self.index.top_terms(n=5)
+        self.assertTrue(top)
+        idfs = [idf for _, idf in top]
+        self.assertEqual(idfs, sorted(idfs, reverse=True))
+
+    def test_top_terms_respects_n(self):
+        top = self.index.top_terms(n=2)
+        self.assertLessEqual(len(top), 2)
+
+    def test_top_terms_for_doc_returns_highest_weight_first(self):
+        top = self.index.top_terms_for_doc("cats.txt", n=5)
+        self.assertTrue(top)
+        weights = [w for _, w in top]
+        self.assertEqual(weights, sorted(weights, reverse=True))
+
+    def test_top_terms_for_unknown_doc_returns_empty(self):
+        self.assertEqual(self.index.top_terms_for_doc("nonexistent.txt"), [])
+
+    def test_document_ids_returns_all_docs_sorted(self):
+        self.assertEqual(
+            self.index.document_ids(), sorted(["cats.txt", "dogs.txt", "cars.txt"])
+        )
+
 
 class PersistenceTests(unittest.TestCase):
     def test_save_then_load_round_trip(self):
