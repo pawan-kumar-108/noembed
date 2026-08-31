@@ -9,13 +9,11 @@ cosine similarity, and an inverted index, persisted to disk with crash-safe
 atomic writes. No numpy, no scikit-learn, no faiss — Python standard library
 only.
 
-## Demo
+## Demo Video
 
 [![noembed demo](https://img.youtube.com/vi/TXFwBJZLFv0/maxresdefault.jpg)](https://youtu.be/TXFwBJZLFv0)
 
-**5 minutes, unedited.** Live search over a real corpus, the crash-recovery
-test running to completion, and a stemmer bug caught mid-build — shown, not
-just claimed.
+
 
 ## What it does
 
